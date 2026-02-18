@@ -54,7 +54,7 @@ async function searchGitHub(query: string): Promise<{
       return { found: false };
     }
 
-    const data = await res.json();
+    const data = (await res.json()) as any;
     if (!data.items || data.items.length === 0) {
       return { found: false };
     }
@@ -199,7 +199,7 @@ export async function analyzeTransparency(
         `${GITHUB_API}/repos/${repoPath}/readme`
       );
       if (readmeRes && readmeRes.ok) {
-        const readmeData = await readmeRes.json();
+        const readmeData = (await readmeRes.json()) as any;
         if (readmeData.content) {
           const content = Buffer.from(readmeData.content, 'base64').toString('utf-8').toLowerCase();
           for (const auditor of KNOWN_AUDITORS) {
