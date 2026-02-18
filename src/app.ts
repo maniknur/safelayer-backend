@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import logger from './utils/logger';
 import riskRoutes from './routes/risk';
 import registryRoutes from './routes/registry';
+import guardianRoutes from './routes/guardian';
+import { getOpenClawManager } from './openclaw';
 
 dotenv.config();
 
@@ -74,6 +76,30 @@ app.get('/health', (_req, res) => {
 // API Routes
 app.use('/api/risk', riskRoutes);
 app.use('/api/registry', registryRoutes);
+app.use('/api/guardian', guardianRoutes);
+
+// OpenClaw Status Endpoint
+app.get('/api/agents/status', (_req, res) => {
+  try {
+    const manager = getOpenClawManager();
+    const status = manager.getStatus();
+
+    return res.json({
+      success: true,
+      agents: status,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    logger.error('Failed to get agent status', {
+      error: error instanceof Error ? error.message : String(error),
+    });
+
+    return res.status(500).json({
+      success: false,
+      error: 'Could not retrieve agent status',
+    });
+  }
+});
 
 // 404 handler
 app.use((req, res) => {
