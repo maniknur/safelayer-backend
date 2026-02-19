@@ -276,6 +276,25 @@ class RiskSentinel implements OpenClawAgent {
   }
 
   /**
+   * Remove address from monitoring watchlist
+   */
+  removeWatchAddress(address: string): boolean {
+    const existed = this.alerts.has(address);
+    if (existed) {
+      this.alerts.delete(address);
+      logger.info('[RiskSentinel] Removed address from watchlist', { address });
+    }
+    return existed;
+  }
+
+  /**
+   * Get list of all watched addresses
+   */
+  getWatchlist(): string[] {
+    return Array.from(this.alerts.keys());
+  }
+
+  /**
    * Update or create alert entry
    */
   private updateAlert(

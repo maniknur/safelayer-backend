@@ -73,6 +73,16 @@ router.post('/check', async (req: express.Request, res: express.Response, next: 
       targetAddress: normalizedAddress,
     });
 
+    // Auto-escalate to Sentinel monitoring if risk is elevated
+    if (decision.level === 'WARN' || decision.level === 'BLOCK') {
+      manager.addToSentinelWatch(normalizedAddress);
+      logger.info('[Guardian] High-risk address escalated to Sentinel watchlist', {
+        address: normalizedAddress,
+        level: decision.level,
+        riskScore: decision.riskScore,
+      });
+    }
+
     // Return decision
     return res.json({
       success: true,

@@ -5,6 +5,7 @@ import logger from './utils/logger';
 import riskRoutes from './routes/risk';
 import registryRoutes from './routes/registry';
 import guardianRoutes from './routes/guardian';
+import sentinelRoutes from './routes/sentinel';
 import { getOpenClawManager } from './openclaw';
 
 dotenv.config();
@@ -19,7 +20,7 @@ const corsOrigins = process.env.CORS_ORIGIN
 // Middleware
 app.use(cors({
   origin: corsOrigins,
-  methods: ['GET', 'POST'],
+  methods: ['GET', 'POST', 'DELETE'],
   credentials: true,
 }));
 app.use(express.json({ limit: '1mb' }));
@@ -77,6 +78,7 @@ app.get('/health', (_req, res) => {
 app.use('/api/risk', riskRoutes);
 app.use('/api/registry', registryRoutes);
 app.use('/api/guardian', guardianRoutes);
+app.use('/api/sentinel', sentinelRoutes);
 
 // OpenClaw Status Endpoint
 app.get('/api/agents/status', (_req, res) => {

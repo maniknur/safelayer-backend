@@ -9,11 +9,16 @@
  * - Returns decision: ALLOW, WARN, or BLOCK
  * 
  * Implements OpenClaw's request-response protection pattern
+ * 
+ * Integration with Sentinel:
+ * - If risk score >= 70 (high threshold), auto-triggers Sentinel monitoring
+ * - Ensures high-risk addresses are tracked for continuous monitoring
  */
 
 import logger from '../utils/logger';
 import { analyzeRiskIntelligence } from '../modules/aggregator/riskIntelligenceEngine';
 import { decideOnRisk, formatDecisionLog } from './decisionEngine';
+import { getOpenClawManager } from './index';
 import type { OpenClawAgent, AgentStatus, GuardianConfig, RiskDecision } from './types';
 
 interface GuardianCheckRequest {
@@ -121,6 +126,28 @@ class RiskGuardian implements OpenClawAgent {
         this.allowedCount++;
       } else {
         this.blockedCount++;
+      }
+
+      // ─── AUTO-TRIGGER SENTINEL ───
+      // If risk is high (>= 70), automatically add to Sentinel's watchlist
+      // This ensures continuous monitoring of suspicious addresses
+      if (riskScore >= 70) {
+        try {
+          const manager = getOpenClawManager();
+          const sentinel = manager.getSentinel();
+          if (sentinel && typeof sentinel.addWatchAddress === 'function') {
+            sentinel.addWatchAddress(targetAddress);
+            logger.info('[RiskGuardian] High-risk address auto-added to Sentinel watchlist', {
+              target: targetAddress,
+              score: riskScore,
+            });
+          }
+        } catch (sentinelError) {
+          logger.warn('[RiskGuardian] Failed to auto-add address to Sentinel', {
+            target: targetAddress,
+            error: sentinelError instanceof Error ? sentinelError.message : String(sentinelError),
+          });
+        }
       }
 
       const duration = Date.now() - checkStart;
